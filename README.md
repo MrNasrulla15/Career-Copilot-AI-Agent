@@ -211,7 +211,10 @@ gcloud run deploy career-copilot --source .
 *Interactive Web Dashboard - Upload & Input Page:*
 ![Dashboard Home](docs/assets/dashboard_home.png)
 
-*Interactive Web Dashboard - Career Intelligence Report & Match Score:*
+*Interactive Web Dashboard - Pipeline Processing & Loading Page:*
+![Dashboard Loading](docs/assets/dashboard_loading.png)
+
+*Interactive Web Dashboard - Career Intelligence Report & Match Score Page:*
 ![Dashboard Results](docs/assets/dashboard_results.png)
 
 ---
