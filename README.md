@@ -24,6 +24,66 @@ Below is the system architecture showing how the pipeline components connect and
 
 ![Career Copilot Architecture](docs/assets/career_copilot_architecture.png)
 
+### Project Structure
+
+```
+career_copilot/
+│
+├── agents/                  # Specialist agent definitions (ADK LlmAgent/SequentialAgent)
+│   ├── __init__.py          # Exports all specialist agent instances
+│   ├── coordinator.py       # Root sequential orchestrator (7-step pipeline)
+│   ├── resume_agent.py      # Extracts candidate profiles from resume text
+│   ├── job_agent.py         # Deconstructs job description requirements
+│   ├── gap_agent.py         # Compares resume against job to compute skill gaps
+│   ├── strategy_agent.py    # Generates 30/60/90-day action plans
+│   └── interview_agent.py   # Creates tailored interview preparation kits
+│
+├── api/                     # FastAPI backend
+│   ├── __init__.py
+│   └── server.py            # Serves API endpoints and static frontend UI
+│
+├── coordinator_agent/       # Entry point package for ADK Dev Server
+│   └── __init__.py          # Exposes root_agent for 'adk web' / 'adk run'
+│
+├── docs/                    # Documentation and assets
+│   └── assets/
+│       └── career_copilot_architecture.png  # System architecture diagram
+│
+├── frontend/                # Web Dashboard static client files
+│   ├── app.js               # UI logic and API client
+│   ├── index.html           # Main dashboard layout
+│   └── style.css            # Custom CSS styling with premium dark mode
+│
+├── mcp_server/              # Model Context Protocol (MCP) server
+│   ├── __init__.py
+│   └── server.py            # FastMCP server exposing document parsing tools
+│
+├── prompts/                 # Centralized system instructions/prompts
+│   ├── __init__.py
+│   ├── coordinator_prompts.py
+│   ├── document_processor_prompts.py
+│   ├── gap_prompts.py
+│   ├── interview_prompts.py
+│   ├── job_prompts.py
+│   ├── resume_prompts.py
+│   └── strategy_prompts.py
+│
+├── tools/                   # Specialist helper tools called by agents
+│   ├── __init__.py          # Wraps functions as FunctionTools
+│   ├── gap_tools.py
+│   ├── interview_tools.py
+│   ├── job_tools.py
+│   ├── pdf_parser.py        # PDF text extractor utility
+│   ├── resume_tools.py
+│   └── strategy_tools.py
+│
+├── .env.example             # Configuration template
+├── Dockerfile               # Production container build definition
+├── main.py                  # Interactive CLI entry point
+├── requirements.txt         # Package dependencies
+└── README.md                # Project documentation
+```
+
 ---
 
 ## Agent Workflow
@@ -148,8 +208,11 @@ gcloud run deploy career-copilot --source .
 
 ## Screenshots
 
-*Interactive Web Dashboard home page and results panel:*
-![Dashboard UI](docs/assets/career_copilot_architecture.png)
+*Interactive Web Dashboard - Upload & Input Page:*
+![Dashboard Home](docs/assets/dashboard_home.png)
+
+*Interactive Web Dashboard - Career Intelligence Report & Match Score:*
+![Dashboard Results](docs/assets/dashboard_results.png)
 
 ---
 
