@@ -1,185 +1,683 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Career Copilot - AI Career Intelligence</title>
-  <meta name="description" content="Upload your resume and paste a job description to get AI-powered career analysis, gap report, and personalized action plan." />
+  <title>Career Copilot — AI-Powered Career Intelligence</title>
+  <meta name="description" content="Redesign your job search with Career Copilot. Upload your resume, parse job descriptions, identify critical skill gaps, and get instant interview preparation keys." />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  
+  <!-- Premium Navigation Header -->
   <header class="site-header">
     <div class="container header-inner">
       <div class="brand">
-        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
-          <rect x="9" y="3" width="6" height="4" rx="1"/>
-          <path d="M9 12h6M9 16h4"/>
+        <!-- SVG Brand Icon -->
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
         </svg>
         <div>
           <div class="brand-name">Career Copilot</div>
-          <div class="brand-sub">AI-powered career intelligence</div>
+          <div class="brand-sub">AI Multi-Agent Pipeline</div>
         </div>
       </div>
-      <span id="status-badge" class="status-badge" aria-live="polite"></span>
+      
+      <div class="nav-controls">
+        <div class="nav-tabs">
+          <button id="btn-tab-workspace" class="tab-btn active" aria-selected="true">Workspace</button>
+          <button id="btn-tab-showcase" class="tab-btn" aria-selected="false">Agent Architecture</button>
+        </div>
+        
+        <span id="status-badge" class="status-badge" aria-live="polite">Connecting...</span>
+        
+        <button id="theme-toggle-btn" class="theme-toggle-btn" title="Toggle Theme" aria-label="Toggle light and dark theme">
+          <!-- Sun Icon (Default shown) -->
+          <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+          </svg>
+          <!-- Moon Icon (Hidden initially) -->
+          <svg id="theme-icon-moon" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+          </svg>
+        </button>
+      </div>
     </div>
   </header>
 
-  <main class="container page-layout">
-    <aside class="input-panel">
-      <div class="card">
-        <h2 class="section-title"><span class="step">1</span>Upload Resume</h2>
-        <p class="hint">PDF or DOCX — text-based files only</p>
-        <label id="upload-zone" class="upload-zone" for="resume-file">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-            <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
-            <polyline points="16 12 12 8 8 12"/>
-            <line x1="12" y1="8" x2="12" y2="20"/>
-          </svg>
-          <span class="upload-main">Click to upload</span>
-          <span class="upload-sub">PDF or DOCX, max 10 MB</span>
-          <input type="file" id="resume-file" accept=".pdf,.docx,.doc" aria-label="Resume file" />
-        </label>
-        <div id="file-info" class="file-info hidden" role="status" aria-live="polite">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true">
-            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
-          </svg>
-          <span id="file-name" class="file-name"></span>
-          <button id="remove-file" class="btn-remove" aria-label="Remove file">&times;</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2 class="section-title"><span class="step">2</span>Job Description</h2>
-        <p class="hint">Paste the full job posting</p>
-        <textarea id="job-description" class="jd-textarea"
-          placeholder="Paste the job description here..."
-          rows="13" aria-label="Job description"></textarea>
-        <div id="jd-counter" class="char-counter" aria-live="polite">0 characters</div>
-      </div>
-
-      <button id="analyze-btn" class="btn-analyze" disabled aria-label="Analyze resume">Analyze</button>
-      <div id="error-box" class="error-box hidden" role="alert" aria-live="assertive"></div>
-    </aside>
-
-    <section id="results-panel" class="results-panel hidden" aria-label="Analysis results">
-      <div id="loading-state" class="loading-state">
-        <div class="spinner" role="status" aria-label="Analyzing"></div>
-        <p class="loading-title">Running AI Analysis Pipeline</p>
-        <div class="pipeline-steps">
-          <div class="pipe-step active" id="ps-resume">Resume Analysis</div>
-          <div class="pipe-step" id="ps-job">Job Analysis</div>
-          <div class="pipe-step" id="ps-gap">Gap Analysis</div>
-          <div class="pipe-step" id="ps-strategy">Career Strategy</div>
-          <div class="pipe-step" id="ps-interview">Interview Prep</div>
-        </div>
-      </div>
-
-      <div id="results-content" class="hidden">
-        <div class="candidate-banner" id="candidate-banner">
-          <div class="candidate-info">
-            <div id="candidate-name" class="candidate-name"></div>
-            <div id="candidate-title" class="candidate-title"></div>
+  <main class="container main-content">
+    
+    <!-- SECTION 1: WORKSPACE VIEW -->
+    <section id="section-workspace" class="view-section workspace-layout">
+      
+      <!-- Workspace Input Controls -->
+      <aside class="input-panel">
+        
+        <!-- Upload Resume Card -->
+        <div class="card">
+          <div class="section-header">
+            <h2 class="section-title">
+              <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              Resume Upload
+            </h2>
+            <p class="section-subtitle">Text-based PDF or DOCX file (up to 10MB)</p>
           </div>
-          <div id="banner-score" class="banner-score-pill"></div>
+          
+          <label id="upload-zone" class="upload-zone" for="resume-file">
+            <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+            </svg>
+            <span class="upload-main-text">Drag and drop here, or browse</span>
+            <span class="upload-sub-text">Supported formats: .pdf, .docx, .doc</span>
+            <input type="file" id="resume-file" accept=".pdf,.docx,.doc" />
+          </label>
+          
+          <div id="file-info" class="file-info hidden" role="status" aria-live="polite">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16" aria-hidden="true">
+              <path d="M20 6L9 17l-5-5"/>
+            </svg>
+            <span id="file-name" class="file-name"></span>
+            <button id="remove-file" class="btn-remove-file" aria-label="Remove uploaded file">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
         </div>
 
-        <div class="card result-card" id="card-score">
-          <h2 class="section-title">Match Score</h2>
-          <div class="score-layout">
-            <div id="score-number" class="score-big">-</div>
-            <div class="score-right">
-              <div id="score-label" class="score-label"></div>
-              <div class="score-track" role="progressbar" aria-valuemin="0" aria-valuemax="100">
-                <div id="score-fill" class="score-fill"></div>
+        <!-- Job Description Card -->
+        <div class="card">
+          <div class="section-header">
+            <h2 class="section-title">
+              <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+              </svg>
+              Job Specifications
+            </h2>
+            <p class="section-subtitle">Input target job listing description</p>
+          </div>
+          
+          <textarea id="job-description" class="jd-textarea"
+            placeholder="Paste target job description responsibilities, requirements, and keywords here..."
+            rows="12" aria-label="Job description text area"></textarea>
+          
+          <div class="counter-bar">
+            <button id="btn-paste-desc" class="btn-paste" type="button" title="Paste clipboard text">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+              </svg>
+              Paste clipboard
+            </button>
+            <div id="jd-counter" class="char-counter" aria-live="polite">0 characters</div>
+          </div>
+        </div>
+
+        <!-- Analyze Call to Action -->
+        <div>
+          <button id="analyze-btn" class="btn-analyze" disabled>
+            Analyze Career Fit
+          </button>
+          
+          <!-- UI validation error -->
+          <div id="error-box" class="error-box hidden" role="alert" aria-live="assertive">
+            <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span id="error-message"></span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Workspace Analysis Outputs -->
+      <section id="results-panel" class="results-panel" aria-label="Analysis dashboard">
+        
+        <!-- Empty Workspace State -->
+        <div id="empty-state" class="card empty-dashboard-state">
+          <svg class="empty-state-graphic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+          <h3 class="empty-state-title">Awaiting Analysis Workspace</h3>
+          <p class="empty-state-desc">Upload a resume and paste a target job listing on the left, then click "Analyze Career Fit" to begin.</p>
+        </div>
+
+        <!-- Running Pipeline Loading Panel -->
+        <div id="loading-state" class="card loading-state-card hidden">
+          <div class="loading-spinner-container">
+            <div class="loading-outer-ring"></div>
+            <div class="loading-inner-core">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+            </div>
+          </div>
+          
+          <h3 class="loading-title">Compiling Career Intelligence Report</h3>
+          <p class="loading-desc">Specialized AI agents are running sequential tools. This may take 30-40 seconds.</p>
+          
+          <!-- Animated Pipeline Progress Node Line -->
+          <div class="pipeline-progress-bar">
+            <div class="pipeline-progress-line"></div>
+            <div id="pipeline-fill" class="pipeline-progress-fill"></div>
+            
+            <div class="pipeline-step-node active" id="ps-resume">
+              <div class="pipeline-step-dot">1</div>
+              <span class="pipeline-step-label">Resume Profile</span>
+            </div>
+            <div class="pipeline-step-node" id="ps-job">
+              <div class="pipeline-step-dot">2</div>
+              <span class="pipeline-step-label">Job Parsing</span>
+            </div>
+            <div class="pipeline-step-node" id="ps-gap">
+              <div class="pipeline-step-dot">3</div>
+              <span class="pipeline-step-label">Gap Analysis</span>
+            </div>
+            <div class="pipeline-step-node" id="ps-strategy">
+              <div class="pipeline-step-dot">4</div>
+              <span class="pipeline-step-label">Study Plan</span>
+            </div>
+            <div class="pipeline-step-node" id="ps-interview">
+              <div class="pipeline-step-dot">5</div>
+              <span class="pipeline-step-label">Interview Prep</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Skeletons placeholders during transit -->
+        <div id="results-skeleton" class="hidden">
+          <div class="card skeleton-card">
+            <div class="skeleton-item skeleton-title"></div>
+            <div class="skeleton-item skeleton-text"></div>
+            <div class="skeleton-item skeleton-text"></div>
+            <div class="skeleton-item skeleton-text short"></div>
+          </div>
+          <div class="card skeleton-card" style="margin-top: 24px;">
+            <div class="skeleton-item skeleton-title"></div>
+            <div class="skeleton-item skeleton-text"></div>
+            <div class="skeleton-item skeleton-text short"></div>
+          </div>
+        </div>
+
+        <!-- Populated Results Section -->
+        <div id="results-content" class="hidden">
+          
+          <!-- Candidate Float Profile Banner -->
+          <div class="card candidate-header-card" id="candidate-banner">
+            <div class="candidate-cover"></div>
+            <div class="candidate-profile-body">
+              <div class="candidate-avatar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <div class="candidate-info-details">
+                <h1 id="candidate-name" class="candidate-name-title">---</h1>
+                <div id="candidate-title" class="candidate-role">---</div>
+              </div>
+              <div class="candidate-metrics">
+                <span id="banner-score" class="status-badge ok">--/100</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Score Card and Core Stats -->
+          <div class="dashboard-grid" style="margin-top: 28px;">
+            
+            <!-- Circular Gauge Card -->
+            <div class="card score-circular-container" id="card-score">
+              <div class="circular-progress-wrapper">
+                <svg class="progress-ring-svg" viewBox="0 0 120 120">
+                  <circle class="progress-ring-circle-bg" cx="60" cy="60" r="50"></circle>
+                  <circle id="score-ring-fill" class="progress-ring-circle-fill" cx="60" cy="60" r="50" stroke-dasharray="314.16" stroke-dashoffset="314.16"></circle>
+                </svg>
+                <div class="circular-score-text-container">
+                  <span id="score-number" class="circular-score-val">0</span>
+                  <span class="circular-score-lbl">Match Score</span>
+                </div>
+              </div>
+              <div class="match-score-summary">
+                <div id="score-label" class="match-label-badge success">Excellent Fit</div>
+                <p class="match-text-desc">Score reflects skill alignment and role requirements.</p>
+              </div>
+            </div>
+
+            <!-- Resume Strengths & Weaknesses -->
+            <div class="card" id="card-resume">
+              <div class="section-header">
+                <h2 class="section-title">
+                  <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                  Resume Profile Audit
+                </h2>
+              </div>
+              
+              <div class="review-panel-inner">
+                <div class="review-sections-split">
+                  <div class="review-column">
+                    <span class="review-column-title success">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16" aria-hidden="true">
+                        <polyline points="20 6 9 17 5 12"/>
+                      </svg>
+                      Identified Strengths
+                    </span>
+                    <ul id="strengths-list" class="review-list success"></ul>
+                  </div>
+                  <div class="review-column">
+                    <span class="review-column-title danger">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                      Development Gaps
+                    </span>
+                    <ul id="weaknesses-list" class="review-list danger"></ul>
+                  </div>
+                </div>
+
+                <div id="suggestions-wrap" class="review-suggestions-section">
+                  <h3 class="suggestions-title">Actionable Profile Recommendations</h3>
+                  <ul id="suggestions-list" class="suggestions-list"></ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Skill Gap Card -->
+          <div class="card" id="card-gaps" style="margin-top: 28px;">
+            <div class="section-header">
+              <h2 class="section-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                Skill Gap Evaluation
+              </h2>
+            </div>
+            
+            <div class="gaps-panel-inner">
+              <div id="priority-gaps-list" class="priority-gaps-grid"></div>
+              
+              <div class="tags-section-wrapper">
+                <div>
+                  <h3 class="cloud-title">Missing Target Technical Skills</h3>
+                  <div id="missing-skills-tags" class="tags-cloud-flex"></div>
+                </div>
+                <div>
+                  <h3 class="cloud-title">Missing Target Keyword Terminology</h3>
+                  <div id="missing-keywords-tags" class="tags-cloud-flex"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Career Timeline Roadmap Card -->
+          <div class="card" id="card-roadmap" style="margin-top: 28px;">
+            <div class="section-header">
+              <h2 class="section-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                Career Acceleration Roadmap
+              </h2>
+            </div>
+            
+            <div class="roadmap-timeline-container">
+              <!-- Node 1: 0-30 Days -->
+              <div class="roadmap-timeline-node now">
+                <div class="roadmap-node-indicator">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 5 12"/></svg>
+                </div>
+                <div class="roadmap-node-content-card">
+                  <div class="roadmap-node-header">
+                    <span class="roadmap-node-phase-title">Immediate Learning Strategy</span>
+                    <span class="roadmap-node-badge">0–30 Days</span>
+                  </div>
+                  <ul id="road-immediate" class="roadmap-steps-list"></ul>
+                </div>
+              </div>
+
+              <!-- Node 2: 30-60 Days -->
+              <div class="roadmap-timeline-node mid">
+                <div class="roadmap-node-indicator">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle></svg>
+                </div>
+                <div class="roadmap-node-content-card">
+                  <div class="roadmap-node-header">
+                    <span class="roadmap-node-phase-title">Intermediate Skill Acceleration</span>
+                    <span class="roadmap-node-badge">1–3 Months</span>
+                  </div>
+                  <ul id="road-midterm" class="roadmap-steps-list"></ul>
+                </div>
+              </div>
+
+              <!-- Node 3: 60-90 Days -->
+              <div class="roadmap-timeline-node long">
+                <div class="roadmap-node-indicator">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle></svg>
+                </div>
+                <div class="roadmap-node-content-card">
+                  <div class="roadmap-node-header">
+                    <span class="roadmap-node-phase-title">Long-Term Optimization & Target Project Delivery</span>
+                    <span class="roadmap-node-badge">3–12 Months</span>
+                  </div>
+                  <ul id="road-longterm" class="roadmap-steps-list"></ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Side Projects Section -->
+            <div id="projects-wrap" class="review-suggestions-section">
+              <h3 class="suggestions-title">Target Portfolio Side Projects</h3>
+              <div id="projects-grid" class="recommended-projects-grid"></div>
+            </div>
+          </div>
+
+          <!-- Interview Prep Card with Expandable Accordions -->
+          <div class="card" id="card-interview" style="margin-top: 28px;">
+            <div class="section-header">
+              <h2 class="section-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                Tailored Interview Prep Kit
+              </h2>
+            </div>
+            
+            <div class="interview-sections-container">
+              
+              <!-- Accordion 1: Technical Questions -->
+              <div class="accordion-wrapper" id="acc-tech">
+                <button class="accordion-header-btn" aria-expanded="false" aria-controls="tech-questions-body">
+                  <span class="accordion-header-label">
+                    <svg class="accordion-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                      <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                      <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                      <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                    </svg>
+                    Expected Technical Questions
+                  </span>
+                  <svg class="accordion-chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+                <div class="accordion-body-content" id="tech-questions-body" role="region">
+                  <div class="accordion-body-inner">
+                    <div id="tech-questions" class="accordion-questions-list"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Accordion 2: Behavioral Questions -->
+              <div class="accordion-wrapper" id="acc-behavioral">
+                <button class="accordion-header-btn" aria-expanded="false" aria-controls="behavioral-questions-body">
+                  <span class="accordion-header-label">
+                    <svg class="accordion-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Expected Behavioral Questions
+                  </span>
+                  <svg class="accordion-chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+                <div class="accordion-body-content" id="behavioral-questions-body" role="region">
+                  <div class="accordion-body-inner">
+                    <div id="behavioral-questions" class="accordion-questions-list"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Accordion 3: System Design Questions -->
+              <div class="accordion-wrapper hidden" id="sysdesign-section">
+                <button class="accordion-header-btn" aria-expanded="false" aria-controls="sysdesign-questions-body">
+                  <span class="accordion-header-label">
+                    <svg class="accordion-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="12 2 2 7 12 12 22 7 12 2 12 2"></polygon>
+                      <polyline points="2 17 12 22 22 17"></polyline>
+                      <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                    Expected System Design Questions
+                  </span>
+                  <svg class="accordion-chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+                <div class="accordion-body-content" id="sysdesign-questions-body" role="region">
+                  <div class="accordion-body-inner">
+                    <div id="sysdesign-questions" class="accordion-questions-list"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Accordion 4: Topics to Revise -->
+              <div class="accordion-wrapper" id="acc-revision">
+                <button class="accordion-header-btn" aria-expanded="false" aria-controls="revision-topics-body">
+                  <span class="accordion-header-label">
+                    <svg class="accordion-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                    </svg>
+                    Critical Topics for Revision
+                  </span>
+                  <svg class="accordion-chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+                <div class="accordion-body-content" id="revision-topics-body" role="region">
+                  <div class="accordion-body-inner">
+                    <div id="prep-areas" class="interview-revision-grid"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Accordion 5: Suggested Answer Frameworks -->
+              <div class="accordion-wrapper" id="acc-frameworks">
+                <button class="accordion-header-btn" aria-expanded="false" aria-controls="suggested-frameworks-body">
+                  <span class="accordion-header-label">
+                    <svg class="accordion-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    Suggested Answer Frameworks
+                  </span>
+                  <svg class="accordion-chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+                <div class="accordion-body-content" id="suggested-frameworks-body" role="region">
+                  <div class="accordion-body-inner">
+                    <div id="answer-cards" class="accordion-frameworks-container"></div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </section>
+
+    <!-- SECTION 2: SHOWCASE VIEW (Agent Showcase) -->
+    <section id="section-showcase" class="view-section hidden">
+      <div class="showcase-grid">
+        
+        <!-- Tech Specifications & Agents Overview -->
+        <div class="showcase-info-block">
+          <div class="card">
+            <div class="section-header">
+              <h2 class="section-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                  <polyline points="2 17 12 22 22 17"></polyline>
+                  <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+                AI Stack Architecture
+              </h2>
+              <p class="section-subtitle">Core technology integrations & Agent configuration</p>
+            </div>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">
+              Career Copilot is architected as an orchestrator pipeline running specialized sub-agents. It leverages the **Google Agent Development Kit (ADK)** to establish type-safe state transitions and coordinates document tools via **Model Context Protocol (MCP)**.
+            </p>
+            
+            <div class="tech-badges-wrap">
+              <span class="tech-label-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 8 8 12 12 16"></polyline><line x1="16" y1="12" x2="8" y2="12"></line></svg>
+                Google ADK Framework
+              </span>
+              <span class="tech-label-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l-7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                Model Context Protocol (MCP)
+              </span>
+              <span class="tech-label-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg>
+                Gemini 2.5 LLM
+              </span>
+              <span class="tech-label-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                FastAPI Python Server
+              </span>
+              <span class="tech-label-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                Google Cloud Run Ready
+              </span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="section-header">
+              <h2 class="section-title">
+                <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                Specialist Agent Roster
+              </h2>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              <div style="background-color: var(--bg); border: 1px solid var(--surface-border); padding: 12px 16px; border-radius: var(--radius-md);">
+                <strong style="font-size: 0.85rem; color: var(--primary);">0. DocumentProcessorAgent</strong>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Spawns MCP server subprocess via `McpToolset` to parse resumes using PDF/Docx text extractors.</p>
+              </div>
+              <div style="background-color: var(--bg); border: 1px solid var(--surface-border); padding: 12px 16px; border-radius: var(--radius-md);">
+                <strong style="font-size: 0.85rem; color: var(--primary);">1. ResumeAnalysisAgent</strong>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Extracts a structured 8-field JSON schema outlining skills, titles, and total years of candidate experience.</p>
+              </div>
+              <div style="background-color: var(--bg); border: 1px solid var(--surface-border); padding: 12px 16px; border-radius: var(--radius-md);">
+                <strong style="font-size: 0.85rem; color: var(--primary);">2. JobAnalysisAgent</strong>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Parses job listings into key requirements, seniority markers, and target technical stacks.</p>
+              </div>
+              <div style="background-color: var(--bg); border: 1px solid var(--surface-border); padding: 12px 16px; border-radius: var(--radius-md);">
+                <strong style="font-size: 0.85rem; color: var(--primary);">3. GapAnalysisAgent</strong>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Calculates skill overlaps, prioritize missing terminology, and scores overall match percentage.</p>
+              </div>
+              <div style="background-color: var(--bg); border: 1px solid var(--surface-border); padding: 12px 16px; border-radius: var(--radius-md);">
+                <strong style="font-size: 0.85rem; color: var(--primary);">4. CareerStrategyAgent</strong>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Draws timelines, maps immediate learning priorities, and recommends target side projects.</p>
+              </div>
+              <div style="background-color: var(--bg); border: 1px solid var(--surface-border); padding: 12px 16px; border-radius: var(--radius-md);">
+                <strong style="font-size: 0.85rem; color: var(--primary);">5. InterviewPrepAgent</strong>
+                <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Generates interview kits with behavioral, system design, and technical questions + STAR answer frameworks.</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="card result-card" id="card-resume">
-          <h2 class="section-title">Resume Review</h2>
-          <div class="two-col">
-            <div>
-              <h3 class="sub-heading sub-heading--success">Strengths</h3>
-              <ul id="strengths-list" class="check-list check-list--success"></ul>
-            </div>
-            <div>
-              <h3 class="sub-heading sub-heading--danger">Weaknesses</h3>
-              <ul id="weaknesses-list" class="check-list check-list--danger"></ul>
-            </div>
+        <!-- Sequential Agent Pipeline Map -->
+        <div class="agent-workflow-card">
+          <div class="section-header">
+            <h2 class="section-title">
+              <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="9" rx="1"></rect>
+                <rect x="14" y="3" width="7" height="5" rx="1"></rect>
+                <rect x="14" y="12" width="7" height="9" rx="1"></rect>
+                <rect x="3" y="16" width="7" height="5" rx="1"></rect>
+              </svg>
+              ADK Sequential Workflow Pipeline
+            </h2>
+            <p class="section-subtitle">Execution map and session handoff order</p>
           </div>
-          <div id="suggestions-wrap" class="suggestions-wrap">
-            <h3 class="sub-heading">Improvement Suggestions</h3>
-            <ul id="suggestions-list" class="arrow-list"></ul>
+
+          <div class="workflow-steps-vertical">
+            <div class="workflow-step-item">
+              <div class="workflow-step-dot"></div>
+              <div class="workflow-step-meta">Step 0</div>
+              <h3 class="workflow-step-name">Document Parsing</h3>
+              <p class="workflow-step-desc">MCP extracts plain text sections from the uploaded PDF resume file.</p>
+            </div>
+            <div class="workflow-step-item">
+              <div class="workflow-step-dot"></div>
+              <div class="workflow-step-meta">Step 1</div>
+              <h3 class="workflow-step-name">Structured Resume Analysis</h3>
+              <p class="workflow-step-desc">Candidate profile is extracted via structured outputs (`ResumeAnalysisOutput`).</p>
+            </div>
+            <div class="workflow-step-item">
+              <div class="workflow-step-dot"></div>
+              <div class="workflow-step-meta">Step 2</div>
+              <h3 class="workflow-step-name">Job Deconstruction</h3>
+              <p class="workflow-step-desc">Target job description requirements are modeled into Pydantic models.</p>
+            </div>
+            <div class="workflow-step-item">
+              <div class="workflow-step-dot"></div>
+              <div class="workflow-step-meta">Step 3</div>
+              <h3 class="workflow-step-name">Gap and Overlap Analysis</h3>
+              <p class="workflow-step-desc">Overall match score and specific skill discrepancies are calculated.</p>
+            </div>
+            <div class="workflow-step-item">
+              <div class="workflow-step-dot"></div>
+              <div class="workflow-step-meta">Step 4</div>
+              <h3 class="workflow-step-name">Personalized Study Timeline</h3>
+              <p class="workflow-step-desc">A structured 30/60/90 day action plan and portfolio projects are formulated.</p>
+            </div>
+            <div class="workflow-step-item">
+              <div class="workflow-step-dot"></div>
+              <div class="workflow-step-meta">Step 5</div>
+              <h3 class="workflow-step-name">Tailored Interview Simulator</h3>
+              <p class="workflow-step-desc">Technical questions and expected behavioral templates are curated.</p>
+            </div>
+            <div class="workflow-step-item">
+              <div class="workflow-step-dot"></div>
+              <div class="workflow-step-meta">Step 6</div>
+              <h3 class="workflow-step-name">Synthesizer Agent</h3>
+              <h4 style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Outputs final Career Intelligence Report to user.</h4>
+            </div>
           </div>
         </div>
 
-        <div class="card result-card" id="card-gaps">
-          <h2 class="section-title">Skill Gaps</h2>
-          <div id="priority-gaps-list" class="priority-gaps"></div>
-          <div class="tags-section">
-            <h3 class="sub-heading">Missing Skills</h3>
-            <div id="missing-skills-tags" class="tag-cloud"></div>
-          </div>
-          <div class="tags-section">
-            <h3 class="sub-heading">Missing Keywords</h3>
-            <div id="missing-keywords-tags" class="tag-cloud tag-cloud--secondary"></div>
-          </div>
-        </div>
-
-        <div class="card result-card" id="card-roadmap">
-          <h2 class="section-title">Career Roadmap</h2>
-          <div class="roadmap-cols">
-            <div class="roadmap-col">
-              <div class="phase-label phase--now">0-30 Days</div>
-              <ol id="road-immediate" class="phase-list"></ol>
-            </div>
-            <div class="roadmap-col">
-              <div class="phase-label phase--mid">1-3 Months</div>
-              <ol id="road-midterm" class="phase-list"></ol>
-            </div>
-            <div class="roadmap-col">
-              <div class="phase-label phase--long">3-12 Months</div>
-              <ol id="road-longterm" class="phase-list"></ol>
-            </div>
-          </div>
-          <div id="projects-wrap" class="projects-wrap">
-            <h3 class="sub-heading">Recommended Projects</h3>
-            <div id="projects-grid" class="projects-grid"></div>
-          </div>
-        </div>
-
-        <div class="card result-card" id="card-interview">
-          <h2 class="section-title">Interview Preparation</h2>
-          <div class="interview-section">
-            <h3 class="sub-heading">Technical Questions</h3>
-            <ol id="tech-questions" class="question-list"></ol>
-          </div>
-          <div class="interview-section">
-            <h3 class="sub-heading">Behavioral Questions</h3>
-            <ol id="behavioral-questions" class="question-list"></ol>
-          </div>
-          <div id="sysdesign-section" class="interview-section hidden">
-            <h3 class="sub-heading">System Design Questions</h3>
-            <ol id="sysdesign-questions" class="question-list"></ol>
-          </div>
-          <div class="interview-section">
-            <h3 class="sub-heading">Topics to Revise</h3>
-            <div id="prep-areas" class="prep-areas"></div>
-          </div>
-          <div class="interview-section">
-            <h3 class="sub-heading">Answer Frameworks</h3>
-            <div id="answer-cards" class="answer-cards"></div>
-          </div>
-        </div>
       </div>
     </section>
+
   </main>
 
+  <!-- Premium Footer -->
   <footer class="site-footer">
-    <div class="container">Powered by Google ADK &amp; Gemini &nbsp;&middot;&nbsp; Career Copilot</div>
+    <div class="container">
+      Powered by Google ADK &amp; Gemini 2.5 &nbsp;&middot;&nbsp; Career Copilot SaaS &nbsp;&middot;&nbsp; All Rights Reserved.
+    </div>
   </footer>
+
   <script src="app.js"></script>
 </body>
 </html>
