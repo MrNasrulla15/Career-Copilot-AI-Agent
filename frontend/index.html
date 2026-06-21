@@ -1,0 +1,185 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Career Copilot - AI Career Intelligence</title>
+  <meta name="description" content="Upload your resume and paste a job description to get AI-powered career analysis, gap report, and personalized action plan." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+          <rect x="9" y="3" width="6" height="4" rx="1"/>
+          <path d="M9 12h6M9 16h4"/>
+        </svg>
+        <div>
+          <div class="brand-name">Career Copilot</div>
+          <div class="brand-sub">AI-powered career intelligence</div>
+        </div>
+      </div>
+      <span id="status-badge" class="status-badge" aria-live="polite"></span>
+    </div>
+  </header>
+
+  <main class="container page-layout">
+    <aside class="input-panel">
+      <div class="card">
+        <h2 class="section-title"><span class="step">1</span>Upload Resume</h2>
+        <p class="hint">PDF or DOCX — text-based files only</p>
+        <label id="upload-zone" class="upload-zone" for="resume-file">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
+            <polyline points="16 12 12 8 8 12"/>
+            <line x1="12" y1="8" x2="12" y2="20"/>
+          </svg>
+          <span class="upload-main">Click to upload</span>
+          <span class="upload-sub">PDF or DOCX, max 10 MB</span>
+          <input type="file" id="resume-file" accept=".pdf,.docx,.doc" aria-label="Resume file" />
+        </label>
+        <div id="file-info" class="file-info hidden" role="status" aria-live="polite">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <span id="file-name" class="file-name"></span>
+          <button id="remove-file" class="btn-remove" aria-label="Remove file">&times;</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title"><span class="step">2</span>Job Description</h2>
+        <p class="hint">Paste the full job posting</p>
+        <textarea id="job-description" class="jd-textarea"
+          placeholder="Paste the job description here..."
+          rows="13" aria-label="Job description"></textarea>
+        <div id="jd-counter" class="char-counter" aria-live="polite">0 characters</div>
+      </div>
+
+      <button id="analyze-btn" class="btn-analyze" disabled aria-label="Analyze resume">Analyze</button>
+      <div id="error-box" class="error-box hidden" role="alert" aria-live="assertive"></div>
+    </aside>
+
+    <section id="results-panel" class="results-panel hidden" aria-label="Analysis results">
+      <div id="loading-state" class="loading-state">
+        <div class="spinner" role="status" aria-label="Analyzing"></div>
+        <p class="loading-title">Running AI Analysis Pipeline</p>
+        <div class="pipeline-steps">
+          <div class="pipe-step active" id="ps-resume">Resume Analysis</div>
+          <div class="pipe-step" id="ps-job">Job Analysis</div>
+          <div class="pipe-step" id="ps-gap">Gap Analysis</div>
+          <div class="pipe-step" id="ps-strategy">Career Strategy</div>
+          <div class="pipe-step" id="ps-interview">Interview Prep</div>
+        </div>
+      </div>
+
+      <div id="results-content" class="hidden">
+        <div class="candidate-banner" id="candidate-banner">
+          <div class="candidate-info">
+            <div id="candidate-name" class="candidate-name"></div>
+            <div id="candidate-title" class="candidate-title"></div>
+          </div>
+          <div id="banner-score" class="banner-score-pill"></div>
+        </div>
+
+        <div class="card result-card" id="card-score">
+          <h2 class="section-title">Match Score</h2>
+          <div class="score-layout">
+            <div id="score-number" class="score-big">-</div>
+            <div class="score-right">
+              <div id="score-label" class="score-label"></div>
+              <div class="score-track" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                <div id="score-fill" class="score-fill"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card result-card" id="card-resume">
+          <h2 class="section-title">Resume Review</h2>
+          <div class="two-col">
+            <div>
+              <h3 class="sub-heading sub-heading--success">Strengths</h3>
+              <ul id="strengths-list" class="check-list check-list--success"></ul>
+            </div>
+            <div>
+              <h3 class="sub-heading sub-heading--danger">Weaknesses</h3>
+              <ul id="weaknesses-list" class="check-list check-list--danger"></ul>
+            </div>
+          </div>
+          <div id="suggestions-wrap" class="suggestions-wrap">
+            <h3 class="sub-heading">Improvement Suggestions</h3>
+            <ul id="suggestions-list" class="arrow-list"></ul>
+          </div>
+        </div>
+
+        <div class="card result-card" id="card-gaps">
+          <h2 class="section-title">Skill Gaps</h2>
+          <div id="priority-gaps-list" class="priority-gaps"></div>
+          <div class="tags-section">
+            <h3 class="sub-heading">Missing Skills</h3>
+            <div id="missing-skills-tags" class="tag-cloud"></div>
+          </div>
+          <div class="tags-section">
+            <h3 class="sub-heading">Missing Keywords</h3>
+            <div id="missing-keywords-tags" class="tag-cloud tag-cloud--secondary"></div>
+          </div>
+        </div>
+
+        <div class="card result-card" id="card-roadmap">
+          <h2 class="section-title">Career Roadmap</h2>
+          <div class="roadmap-cols">
+            <div class="roadmap-col">
+              <div class="phase-label phase--now">0-30 Days</div>
+              <ol id="road-immediate" class="phase-list"></ol>
+            </div>
+            <div class="roadmap-col">
+              <div class="phase-label phase--mid">1-3 Months</div>
+              <ol id="road-midterm" class="phase-list"></ol>
+            </div>
+            <div class="roadmap-col">
+              <div class="phase-label phase--long">3-12 Months</div>
+              <ol id="road-longterm" class="phase-list"></ol>
+            </div>
+          </div>
+          <div id="projects-wrap" class="projects-wrap">
+            <h3 class="sub-heading">Recommended Projects</h3>
+            <div id="projects-grid" class="projects-grid"></div>
+          </div>
+        </div>
+
+        <div class="card result-card" id="card-interview">
+          <h2 class="section-title">Interview Preparation</h2>
+          <div class="interview-section">
+            <h3 class="sub-heading">Technical Questions</h3>
+            <ol id="tech-questions" class="question-list"></ol>
+          </div>
+          <div class="interview-section">
+            <h3 class="sub-heading">Behavioral Questions</h3>
+            <ol id="behavioral-questions" class="question-list"></ol>
+          </div>
+          <div id="sysdesign-section" class="interview-section hidden">
+            <h3 class="sub-heading">System Design Questions</h3>
+            <ol id="sysdesign-questions" class="question-list"></ol>
+          </div>
+          <div class="interview-section">
+            <h3 class="sub-heading">Topics to Revise</h3>
+            <div id="prep-areas" class="prep-areas"></div>
+          </div>
+          <div class="interview-section">
+            <h3 class="sub-heading">Answer Frameworks</h3>
+            <div id="answer-cards" class="answer-cards"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">Powered by Google ADK &amp; Gemini &nbsp;&middot;&nbsp; Career Copilot</div>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>

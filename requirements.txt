@@ -1,0 +1,34 @@
+# Career Copilot — Python dependencies
+#
+# Install with: pip install -r requirements.txt
+# Recommended: use a virtual environment (python -m venv .venv)
+
+# Google Agent Development Kit — core framework
+google-adk>=1.0.0
+
+# Google Generative AI SDK — used for types.Content / types.Part
+google-generativeai>=0.8.0
+
+# Pydantic v2 — type-safe data models and validation
+pydantic>=2.0.0
+
+# python-dotenv — loads .env file into os.environ
+python-dotenv>=1.0.0
+
+# PyMuPDF — PDF text extraction
+PyMuPDF>=1.22.0
+
+# python-docx — DOCX text extraction
+python-docx>=0.8.11
+
+# uvicorn — ASGI server to run FastAPI app
+uvicorn>=0.20.0
+
+# PDF parsing — used by tools/pdf_parser.py
+# pymupdf: best-in-class layout-aware extraction (multi-column resumes)
+# pypdf:   pure-Python fallback for simpler PDFs
+pymupdf>=1.24.0
+pypdf>=4.0.0
+
+# MCP (Model Context Protocol) — server SDK + ADK client integration
+mcp>=1.0.0
