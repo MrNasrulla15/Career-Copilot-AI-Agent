@@ -1,210 +1,161 @@
-# 🚀 Career Copilot
+# Career Copilot
 
-> A production-ready multi-agent AI system built with [Google ADK](https://google.github.io/adk-docs) that analyzes your resume, deconstructs job descriptions, identifies skill gaps, builds a personalized career strategy, and prepares you for interviews — all in one pipeline.
+> A production-ready, multi-agent AI system built with [Google ADK](https://google.github.io/adk-docs) and Google Gemini that analyzes resumes, deconstructs job descriptions, identifies skill gaps, constructs tailored 30/60/90-day learning roadmaps, and prepares candidates for interviews.
 
 ---
 
-## Workflow Architecture
+## Problem Statement
 
-Below is the workflow diagram showing how the root **CareerCopilotCoordinator** orchestrates the specialized sub-agents and custom tools to compile your Career Intelligence Report:
+When applying for modern jobs, candidates face a highly competitive landscape that requires tailoring resumes to match complex job descriptions. Identifying key skill gaps, finding relevant learning resources, creating action-oriented study roadmaps, and anticipating specific interview questions is a manual, tedious, and error-prone process. Job seekers struggle to perform this deep analysis effectively for every application, leading to lower conversion rates and unprepared interviews.
+
+---
+
+## Solution Overview
+
+**Career Copilot** solves this problem by automating the end-to-end career analysis pipeline. Using a sequence of specialized AI agents built on the Google Agent Development Kit (ADK), the application extracts candidate profiles, analyzes target role requirements, scores skill alignment, and synthesizes a complete **Career Intelligence Report**. 
+
+Candidates can interact with Career Copilot via a robust **Interactive CLI** or a modern, responsive **Web Dashboard** which supports uploading PDF/DOCX resumes and inputting target job descriptions.
+
+---
+
+## Architecture Diagram
+
+Below is the system architecture showing how the pipeline components connect and how the root **CareerCopilotCoordinator** orchestrates the specialist sub-agents:
 
 ![Career Copilot Architecture](docs/assets/career_copilot_architecture.png)
 
 ---
 
-## Architecture
+## Agent Workflow
 
-```
-career_copilot/
-│
-├── agents/
-│   ├── __init__.py          # Exports all specialist agent instances
-│   ├── coordinator.py       # 🤝 Root orchestrator — wraps all sub-agents as tools
-│   ├── resume_agent.py      # 📋 Parses resume → session.state["resume_analysis"]
-│   ├── job_agent.py         # 💼 Parses job description → session.state["job_analysis"]
-│   ├── gap_agent.py         # 📊 Computes gaps → session.state["gap_analysis"]
-│   ├── strategy_agent.py    # 🗺️ Builds 30/60/90-day plan → session.state["career_strategy"]
-│   └── interview_agent.py   # 🎤 Generates prep kit → session.state["interview_prep"]
-│
-├── tools/
-│   ├── __init__.py          # Wraps all callables in FunctionTool, exports grouped lists
-│   ├── resume_tools.py      # extract_skills, score_resume_section, detect_resume_format
-│   ├── job_tools.py         # extract_job_requirements, classify_seniority, detect_tech_stack
-│   ├── gap_tools.py         # compute_skill_overlap, prioritize_gaps, estimate_learning_time
-│   ├── strategy_tools.py    # generate_action_items, recommend_resources, build_timeline
-│   └── interview_tools.py   # generate_interview_questions, draft_star_answer, create_cheat_sheet
-│
-├── prompts/
-│   ├── __init__.py          # Re-exports all prompt constants
-│   ├── coordinator_prompts.py
-│   ├── resume_prompts.py
-│   ├── job_prompts.py
-│   ├── gap_prompts.py
-│   ├── strategy_prompts.py
-│   └── interview_prompts.py
-│
-├── main.py                  # CLI entry point — async interactive session
-├── requirements.txt         # Python dependencies
-├── .env.example             # Environment variable template
-└── README.md
-```
+Career Copilot utilizes a `SequentialAgent` pipeline (consisting of 7 steps) to run specialist agents in an optimized sequence, sharing analysis state through the ADK session context:
 
-## Multi-Agent Pipeline
-
-```
-User Input (resume + job description)
-         │
-         ▼
-┌─────────────────────────┐
-│  CareerCopilotCoordinator│  ← Root LlmAgent
-│  (agents/coordinator.py) │
-└────────────┬────────────┘
-             │  delegates via AgentTool
-    ┌────────┴──────────────────────────────────┐
-    │        Sequential delegation order         │
-    ▼                                            │
-┌──────────────────┐                             │
-│ ResumeAnalysis   │ → session["resume_analysis"]│
-└──────────┬───────┘                             │
-           ▼                                     │
-┌──────────────────┐                             │
-│ JobAnalysis      │ → session["job_analysis"]   │
-└──────────┬───────┘                             │
-           ▼                                     │
-┌──────────────────┐                             │
-│ GapAnalysis      │ → session["gap_analysis"]   │
-└──────────┬───────┘                             │
-           ▼                                     │
-┌──────────────────┐                             │
-│ CareerStrategy   │ → session["career_strategy"]│
-└──────────┬───────┘                             │
-           ▼                                     │
-┌──────────────────┐                             │
-│ InterviewPrep    │ → session["interview_prep"] │
-└──────────┬───────┘                             │
-           └────────────────────────────────────┘
-                         │
-                         ▼
-             📄 Career Intelligence Report
-```
-
-### Key Design Patterns
-
-| Pattern | Where Used | Why |
-|---|---|---|
-| **Agent-as-Tool** | `coordinator.py` | Each specialist agent wrapped in `AgentTool` — coordinator's LLM decides when to call each one |
-| **output_key** | All specialist agents | Automatically saves agent output to `session.state[key]` for downstream consumption |
-| **Session state sharing** | Gap, Strategy, Interview agents | Agents read from earlier agents' outputs without direct coupling |
-| **Centralized prompts** | `prompts/` | System instructions kept separate for easy tuning without touching agent logic |
-| **Grouped FunctionTools** | `tools/__init__.py` | All tools wrapped once and exported as lists for clean agent instantiation |
+1. **`DocumentProcessorAgent` (Step 0)**: Connects to a local MCP (Model Context Protocol) server via stdio to extract raw text from PDF resume files and parse it into canonical resume sections.
+2. **`ResumeAnalysisAgent` (Step 1)**: Accepts raw resume text and extracts a structured JSON candidate profile containing candidate name, current title, years of experience, technical skills, soft skills, education, and certifications.
+3. **`JobAnalysisAgent` (Step 2)**: Analyzes target job descriptions, extracting key responsibilities, required skills, preferred qualifications, and company culture elements.
+4. **`GapAnalysisAgent` (Step 3)**: Compares the candidate profile (Step 1) against job requirements (Step 2) to compute a match score, list missing technical skills/keywords, and outline high, medium, and low-priority gaps.
+5. **`CareerStrategyAgent` (Step 4)**: Generates a step-by-step 30/60/90-day career roadmap, detailing specific action items, recommended learning resources, and hands-on side projects to close identified skill gaps.
+6. **`InterviewPrepAgent` (Step 5)**: Produces a tailored interview kit featuring custom technical, behavioral, and system design questions mapped specifically to the candidate and the target job description.
+7. **`CareerCopilotSynthesizer` (Step 6)**: Synthesizes all specialist agent outputs into a unified, client-ready **Career Intelligence Report**.
 
 ---
 
-## Setup
+## Technologies Used
 
-### 1. Clone and create a virtual environment
+- **AI Orchestration**: [Google ADK (Agent Development Kit)](https://google.github.io/adk-docs)
+- **Large Language Models**: Google Gemini API (`gemini-2.5-flash`)
+- **Web Application**: FastAPI (Python backend), Vanilla HTML5/CSS3/JavaScript (Modern frontend dashboard)
+- **Document Parsing**: PyMuPDF (`fitz`), `python-docx`
+- **Tool Protocol**: Model Context Protocol (MCP) via `FastMCP`
+- **Deployment & Containerization**: Docker, Google Cloud Run
 
+---
+
+## Installation
+
+### Prerequisites
+- Python 3.10+
+- Git
+
+### 1. Clone the Repository
 ```bash
-cd career-copilot
+git clone https://github.com/MrNasrulla15/Career-Copilot-AI-Agent.git
+cd Career-Copilot-AI-Agent
+```
+
+### 2. Create and Activate Virtual Environment
+```bash
 python -m venv .venv
 
-# Windows
+# Windows (Command Prompt / PowerShell)
 .venv\Scripts\activate
 
-# macOS/Linux
+# macOS / Linux
 source .venv/bin/activate
 ```
 
-### 2. Install dependencies
-
+### 3. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Configure environment
+---
 
+## Local Setup
+
+### 1. Configure Environment Variables
+Copy the example environment file:
 ```bash
 cp .env.example .env
-# Edit .env and add your GOOGLE_API_KEY
 ```
 
-Get a free API key at: https://aistudio.google.com/app/apikey
+### 2. Add API Keys & Settings
+Open `.env` in your text editor and specify your Gemini credentials:
+```env
+GOOGLE_API_KEY=your_gemini_api_key_here
+MODEL_NAME=gemini-2.5-flash
+```
+> Get a free API Key at [Google AI Studio](https://aistudio.google.com/app/apikey).
 
-### 4. Run the Interactive CLI
+---
 
+## Running the Project
+
+### Interactive CLI Loop
+Run the command-line interface to interact with the pipeline directly from the terminal:
 ```bash
 python main.py
 ```
+Pasting multi-line text (e.g. resumes/job descriptions) is fully supported. Type `DONE` on a new line and press Enter to submit your inputs.
 
-### 5. Run the Web Application (FastAPI + Web UI)
-
-You can also run Career Copilot as a modern web app with a visual interface:
-
+### FastAPI + Web Dashboard
+Launch the web interface locally:
 ```bash
 uvicorn api.server:app --port 8000
 ```
-Then open **http://localhost:8000** in your browser to upload files and view results.
+Open **http://localhost:8000** in your browser. Here you can upload `.pdf` or `.docx` resume files, paste job descriptions, and view a visual dashboard containing the matched score, roadmaps, and interview questions.
 
 ---
 
-## Usage
+## MCP Integration
 
-When the CLI starts, paste your resume text, job description, or both.
-Type **`DONE`** on a new line and press Enter to submit.
-
-**Example inputs:**
-
-```
-[Turn 1] You → (press Enter twice when done):
-Here's my resume:
-[paste resume text]
-
-Here's the job I'm targeting:
-[paste job description]
-
-```
-
-The coordinator will:
-1. Analyze your resume
-2. Parse the job description  
-3. Identify skill gaps and compute your match score
-4. Build a personalized 30/60/90-day action plan
-5. Generate a tailored interview prep kit
-6. Deliver a complete Career Intelligence Report
+The `DocumentProcessorAgent` utilizes the **Model Context Protocol (MCP)** to isolate and offload parsing routines.
+- The MCP server is located at `mcp_server/server.py` and built using `FastMCP`.
+- It exposes two tools:
+  - `extract_resume_text(file_path: str)`: Extracts layout-aware raw text from a PDF resume.
+  - `parse_resume_sections(text: str)`: Classifies and segments plain text into structured blocks (summary, experience, education, skills, etc.) using regex heuristic classifiers.
+- The coordinator agent launches this server as a subprocess via ADK's `McpToolset` over `stdio` transport.
 
 ---
 
-## Agents Reference
+## Deployment
 
-| Agent | File | Tools | Output Key |
-|---|---|---|---|
-| Coordinator | `agents/coordinator.py` | AgentTools (5 sub-agents) | — |
-| Resume Analysis | `agents/resume_agent.py` | `extract_skills`, `score_resume_section`, `detect_resume_format` | `resume_analysis` |
-| Job Analysis | `agents/job_agent.py` | `extract_job_requirements`, `classify_seniority`, `detect_tech_stack` | `job_analysis` |
-| Gap Analysis | `agents/gap_agent.py` | `compute_skill_overlap`, `prioritize_gaps`, `estimate_learning_time` | `gap_analysis` |
-| Career Strategy | `agents/strategy_agent.py` | `generate_action_items`, `recommend_resources`, `build_timeline` | `career_strategy` |
-| Interview Prep | `agents/interview_agent.py` | `generate_interview_questions`, `draft_star_answer`, `create_cheat_sheet` | `interview_prep` |
-
----
-
-## Extending the System
-
-**Add a new tool:**
-1. Define a Python function with a clear docstring in `tools/<agent>_tools.py`
-2. Add `FunctionTool(func=your_function)` to the relevant list in `tools/__init__.py`
-3. Add the tool to the relevant agent's `tools=` list
-
-**Add a new agent:**
-1. Create `agents/new_agent.py` with an `LlmAgent` definition
-2. Add its prompt to `prompts/new_prompts.py`
-3. Export from `agents/__init__.py`
-4. Wrap in `AgentTool` in `agents/coordinator.py`
-
-**Swap to production session storage:**
-Replace `InMemorySessionService` in `main.py` with a persistent implementation
-(e.g., backed by Cloud Firestore or a SQL database).
-
-**Deploy to Cloud Run:**
+### Docker Containerization
+A production [Dockerfile](file:///c:/Users/nasru/career-copilot/Dockerfile) is included at the root of the project. Build the image locally using:
 ```bash
-adk deploy cloud_run --project YOUR_GCP_PROJECT agents/coordinator.py
+docker build -t career-copilot .
+docker run -p 8000:8000 --env-file .env career-copilot
 ```
+
+### Deploy to Google Cloud Run
+Deploy the application to Google Cloud Run:
+```bash
+gcloud run deploy career-copilot --source .
+```
+*Note: Make sure your target Google Cloud Project has an active billing account linked to enable Artifact Registry, Cloud Build, and containerized deployment capabilities.*
+
+---
+
+## Screenshots
+
+*Interactive Web Dashboard home page and results panel:*
+![Dashboard UI](docs/assets/career_copilot_architecture.png)
+
+---
+
+## Future Improvements
+
+1. **Persistent Session Databases**: Connect ADK session storage to Google Cloud Firestore or PostgreSQL to save history and track candidate progress over time.
+2. **Mock Interview Audio Coach**: Integrate Gemini Live API (WebSockets) to offer speech-to-text interactive mock interview practice.
+3. **Job Search API Integrations**: Directly fetch and load job descriptions from platforms like LinkedIn or Indeed using search URLs.
+4. **Resubmit / Iteration Loop**: Enable users to edit their resume draft directly inside the web UI and immediately re-evaluate their matching score.
