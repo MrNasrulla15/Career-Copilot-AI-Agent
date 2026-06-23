@@ -76,24 +76,41 @@ async def get_final_response(runner: Runner, session_id: str, user_input: str) -
     """
     Send a message to the coordinator pipeline and collect the final
     text response from the synthesizer agent at the end of the sequence.
+    With retries for transient errors.
     """
     message = types.Content(
         role="user",
         parts=[types.Part(text=user_input)],
     )
 
-    final_response = ""
-    async for event in runner.run_async(
-        user_id=USER_ID,
-        session_id=session_id,
-        new_message=message,
-    ):
-        if hasattr(event, "content") and event.content and event.content.parts:
-            for part in event.content.parts:
-                if hasattr(part, "text") and part.text:
-                    final_response = part.text  # last text wins
+    max_retries = 6
+    base_delay = 4.0
 
-    return final_response or "[No response generated]"
+    for attempt in range(max_retries):
+        try:
+            final_response = ""
+            async for event in runner.run_async(
+                user_id=USER_ID,
+                session_id=session_id,
+                new_message=message,
+            ):
+                if hasattr(event, "content") and event.content and event.content.parts:
+                    for part in event.content.parts:
+                        if hasattr(part, "text") and part.text:
+                            final_response = part.text  # last text wins
+            return final_response or "[No response generated]"
+        except Exception as e:
+            err_msg = str(e)
+            is_transient = any(
+                code in err_msg
+                for code in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED", "500", "504"]
+            )
+            if is_transient and attempt < max_retries - 1:
+                delay = base_delay * (2 ** attempt)
+                print(f"\n[WARNING] Transient API error ({err_msg}). Retrying in {delay:.1f}s (Attempt {attempt + 1}/{max_retries})...")
+                await asyncio.sleep(delay)
+            else:
+                raise e
 
 
 # ---------------------------------------------------------------------------
@@ -184,11 +201,13 @@ async def run_session(runner: Runner, session_id: str) -> None:
 
 async def main() -> None:
     api_key   = os.getenv("GOOGLE_API_KEY")
+    if api_key in ("your_api_key_here", "your_gemini_api_key_here", ""):
+        api_key = None
     use_vertex = os.getenv("GOOGLE_GENAI_USE_VERTEXAI", "false").lower() == "true"
 
     if not api_key and not use_vertex:
-        print("\n[ERROR] GOOGLE_API_KEY is not set.")
-        print("  Create a .env file from .env.example and add your API key.")
+        print("\n[ERROR] GOOGLE_API_KEY is not configured with a valid key.")
+        print("  Please update the GOOGLE_API_KEY inside your .env file with your actual API key.")
         print("  Get a free key at: https://aistudio.google.com/app/apikey\n")
         return
 

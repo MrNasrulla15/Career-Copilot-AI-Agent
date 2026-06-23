@@ -6,8 +6,8 @@
 # Google Agent Development Kit — core framework
 google-adk>=1.0.0
 
-# Google Generative AI SDK — used for types.Content / types.Part
-google-generativeai>=0.8.0
+# Google Generative AI SDK
+google-genai>=0.1.1
 
 # Pydantic v2 — type-safe data models and validation
 pydantic>=2.0.0
@@ -20,6 +20,9 @@ PyMuPDF>=1.22.0
 
 # python-docx — DOCX text extraction
 python-docx>=0.8.11
+
+# FastAPI — web server framework
+fastapi>=0.95.0
 
 # uvicorn — ASGI server to run FastAPI app
 uvicorn>=0.20.0

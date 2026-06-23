@@ -121,24 +121,51 @@ async def run_agent_step(
     session_id: str,
     message_text: str,
 ) -> None:
-    """Run a single agent step, consuming all events."""
+    """Run a single agent step, consuming all events, with retries for transient errors."""
+    import asyncio
+    import logging
+    
     message = types.Content(
         role="user",
         parts=[types.Part(text=message_text)],
     )
-    async for _ in runner.run_async(
-        user_id=USER_ID,
-        session_id=session_id,
-        new_message=message,
-    ):
-        pass  # consume events; results go to session state via output_key
+    
+    max_retries = 6
+    base_delay = 4.0  # seconds
+    
+    for attempt in range(max_retries):
+        try:
+            async for _ in runner.run_async(
+                user_id=USER_ID,
+                session_id=session_id,
+                new_message=message,
+            ):
+                pass
+            return  # Success!
+        except Exception as e:
+            err_msg = str(e)
+            is_transient = any(
+                code in err_msg
+                for code in ["503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED", "500", "504"]
+            )
+            if is_transient and attempt < max_retries - 1:
+                delay = base_delay * (2 ** attempt)
+                logging.warning(
+                    f"Transient error running agent {runner.agent.name}: {err_msg}. "
+                    f"Retrying in {delay:.1f}s (Attempt {attempt + 1}/{max_retries})..."
+                )
+                await asyncio.sleep(delay)
+            else:
+                raise e
 
 
 async def run_pipeline(resume_text: str, job_description: str) -> dict:
     """
-    Run all 5 specialist agents in sequence.
+    Run all 5 specialist agents with parallelization where independent.
     Returns the raw session state dict after all agents complete.
     """
+    import asyncio
+
     session_service = InMemorySessionService()
     session_id = str(uuid.uuid4())
 
@@ -148,21 +175,28 @@ async def run_pipeline(resume_text: str, job_description: str) -> dict:
         session_id=session_id,
     )
 
-    agents_and_messages = [
-        (resume_agent,   resume_text),
-        (job_agent,      job_description),
-        (gap_agent,      "Perform gap analysis using the resume and job data in session state."),
-        (strategy_agent, "Generate a career strategy from the gap analysis in session state."),
-        (interview_agent,"Generate an interview preparation kit from the resume and job data in session state."),
-    ]
+    # 1. Run Resume Analysis and Job Analysis concurrently
+    runner_resume = Runner(agent=resume_agent, app_name=APP_NAME, session_service=session_service)
+    runner_job = Runner(agent=job_agent, app_name=APP_NAME, session_service=session_service)
 
-    for agent, message in agents_and_messages:
-        runner = Runner(
-            agent=agent,
-            app_name=APP_NAME,
-            session_service=session_service,
-        )
-        await run_agent_step(runner, session_id, message)
+    await asyncio.gather(
+        run_agent_step(runner_resume, session_id, resume_text),
+        run_agent_step(runner_job, session_id, job_description)
+    )
+
+    # 2. Run Gap Analysis (followed by Career Strategy) concurrently with Interview Prep
+    runner_gap = Runner(agent=gap_agent, app_name=APP_NAME, session_service=session_service)
+    runner_strat = Runner(agent=strategy_agent, app_name=APP_NAME, session_service=session_service)
+    runner_interview = Runner(agent=interview_agent, app_name=APP_NAME, session_service=session_service)
+
+    async def run_gap_and_strategy():
+        await run_agent_step(runner_gap, session_id, "Perform gap analysis using the resume and job data in session state.")
+        await run_agent_step(runner_strat, session_id, "Generate a career strategy from the gap analysis in session state.")
+
+    await asyncio.gather(
+        run_gap_and_strategy(),
+        run_agent_step(runner_interview, session_id, "Generate an interview preparation kit from the resume and job data in session state.")
+    )
 
     session = await session_service.get_session(
         app_name=APP_NAME,
@@ -373,8 +407,9 @@ async def analyze(
 async def health():
     """Health check endpoint."""
     model = os.getenv("MODEL_NAME", "gemini-2.0-flash")
-    api_key_set = bool(os.getenv("GOOGLE_API_KEY"))
-    return {"status": "ok", "model": model, "api_key_configured": api_key_set}
+    api_key = os.getenv("GOOGLE_API_KEY", "")
+    api_key_configured = bool(api_key) and api_key not in ("your_api_key_here", "your_gemini_api_key_here")
+    return {"status": "ok", "model": model, "api_key_configured": api_key_configured}
 
 
 # ---------------------------------------------------------------------------
