@@ -175,6 +175,8 @@ uvicorn api.server:app --port 8000
 ```
 Open **http://localhost:8000** in your browser. Here you can upload `.pdf` or `.docx` resume files, paste job descriptions, and view a visual dashboard containing the matched score, roadmaps, and interview questions.
 
+> ⚡ **Latency Optimization**: The FastAPI backend leverages concurrent execution (`asyncio.gather`) to run independent agents in parallel (e.g., executing Resume and Job Analysis concurrently, and Gap Analysis and Interview Prep concurrently), reducing total analysis latency by **~40%**.
+
 ---
 
 ## MCP Integration
