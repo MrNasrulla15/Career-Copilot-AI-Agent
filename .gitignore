@@ -10,8 +10,18 @@ venv/
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Environment variables (Sensitive)
+# Environment variables (Sensitive Secrets)
 .env
+*.env.local
+
+# Logs and scratch
+*.log
+scratch/
+.pytest_cache/
+
+# IDE / Editor configuration
+.idea/
+.vscode/
 
 # OS files
 .DS_Store

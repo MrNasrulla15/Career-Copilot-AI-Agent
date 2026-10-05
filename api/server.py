@@ -22,9 +22,12 @@ Then open: http://localhost:8000
 
 import json
 import os
+import re
 import sys
 import tempfile
+import time
 import uuid
+from collections import defaultdict
 from pathlib import Path
 
 # Add project root to path
@@ -33,7 +36,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -50,31 +53,105 @@ from agents.interview_agent import interview_agent
 
 
 # ---------------------------------------------------------------------------
-# App setup
+# App setup & Security Hardening
 # ---------------------------------------------------------------------------
 
-app = FastAPI(title="Career Copilot API", version="1.0.0")
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+app = FastAPI(
+    title="Career Copilot API",
+    version="1.0.0",
+    docs_url="/docs" if DEBUG else None,
+    redoc_url="/redoc" if DEBUG else None,
+)
+
+# 1. CORS Hardening
+raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000")
+allowed_origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
+if "*" in allowed_origins and not DEBUG:
+    allowed_origins = ["http://localhost:8000", "http://127.0.0.1:8000"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
+    allow_origins=allowed_origins,
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
+
+# 2. Security Headers & Rate Limiting Middleware
+RATE_LIMIT = int(os.getenv("RATE_LIMIT_PER_MINUTE", "10"))
+rate_limit_records = defaultdict(list)
+
+@app.middleware("http")
+async def security_and_rate_limit_middleware(request: Request, call_next):
+    # Rate limiting for API requests
+    if request.url.path.startswith("/api/"):
+        client_ip = request.client.host if request.client else "unknown"
+        now = time.time()
+        # Filter requests from last 60 seconds
+        window_starts = now - 60
+        rate_limit_records[client_ip] = [t for t in rate_limit_records[client_ip] if t > window_starts]
+        
+        if len(rate_limit_records[client_ip]) >= RATE_LIMIT:
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Too many requests. Please slow down and try again in a minute."}
+            )
+        rate_limit_records[client_ip].append(now)
+
+    response = await call_next(request)
+    
+    # OWASP Security Headers
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self' data: blob:; "
+        "connect-src 'self';"
+    )
+    return response
+
 
 APP_NAME = "career_copilot_api"
 USER_ID  = "api_user"
 
 
 # ---------------------------------------------------------------------------
-# Document extraction helpers
+# Input Sanitization & Document Validation Helpers
 # ---------------------------------------------------------------------------
 
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB limit
+
+def sanitize_text(text: str) -> str:
+    """Sanitize user text input to strip control characters and malicious scripts."""
+    if not text:
+        return ""
+    # Strip HTML/script tags
+    clean = re.sub(r'<[^>]*>', '', text)
+    # Remove null bytes and non-printable control characters
+    clean = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', clean)
+    return clean.strip()
+
+
 def extract_text_from_upload(file_bytes: bytes, filename: str) -> str:
-    """Extract plain text from a PDF or DOCX upload."""
-    ext = Path(filename).suffix.lower()
+    """Sanitize filename, validate file headers, and extract text from PDF or DOCX."""
+    # Prevent Path Traversal attacks
+    safe_filename = Path(filename).name
+    ext = Path(safe_filename).suffix.lower()
+
+    if len(file_bytes) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="File size exceeds maximum allowed limit of 10MB.")
 
     if ext == ".pdf":
+        # Validate PDF Magic Bytes (%PDF)
+        if not file_bytes.startswith(b"%PDF"):
+            raise HTTPException(status_code=422, detail="Invalid PDF file header.")
         try:
             import fitz
             with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
@@ -88,28 +165,34 @@ def extract_text_from_upload(file_bytes: bytes, filename: str) -> str:
                     pages.append(text)
             doc.close()
             os.unlink(tmp_path)
-            return "\n\n".join(pages)
+            return sanitize_text("\n\n".join(pages))
+        except HTTPException:
+            raise
         except Exception as e:
-            raise HTTPException(status_code=422, detail=f"PDF extraction failed: {e}")
+            raise HTTPException(status_code=422, detail=f"PDF text extraction failed: {e}")
 
     elif ext in (".docx", ".doc"):
+        # Validate PK ZIP magic header for DOCX
+        if ext == ".docx" and not file_bytes.startswith(b"PK\x03\x04"):
+            raise HTTPException(status_code=422, detail="Invalid DOCX document header.")
         try:
             import docx
             import io
             doc = docx.Document(io.BytesIO(file_bytes))
             paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
-            return "\n".join(paragraphs)
+            return sanitize_text("\n".join(paragraphs))
+        except HTTPException:
+            raise
         except ImportError:
-            raise HTTPException(status_code=422, detail="python-docx not installed. Run: pip install python-docx")
+            raise HTTPException(status_code=422, detail="python-docx library not installed.")
         except Exception as e:
             raise HTTPException(status_code=422, detail=f"DOCX extraction failed: {e}")
 
     else:
-        # Try as plain text
         try:
-            return file_bytes.decode("utf-8", errors="replace")
+            return sanitize_text(file_bytes.decode("utf-8", errors="replace"))
         except Exception:
-            raise HTTPException(status_code=422, detail=f"Unsupported file type: {ext}")
+            raise HTTPException(status_code=422, detail=f"Unsupported file type extension: {ext}")
 
 
 # ---------------------------------------------------------------------------
@@ -357,6 +440,7 @@ def build_response(state: dict) -> dict:
 async def analyze(
     resume_file: UploadFile = File(...),
     job_description: str    = Form(...),
+    x_api_key: str | None   = Header(None, alias="X-API-Key"),
 ) -> JSONResponse:
     """
     Run the Career Copilot analysis pipeline.
@@ -364,41 +448,49 @@ async def analyze(
     Accepts:
         resume_file     — PDF or DOCX upload
         job_description — plain text job description
-
-    Returns:
-        Structured JSON with resume_review, match_score, skill_gaps,
-        career_roadmap, and interview_prep.
+        x_api_key       — optional client authentication key header
     """
-    if not job_description.strip():
-        raise HTTPException(status_code=400, detail="Job description is required.")
+    # 1. Authenticate API Key if configured in environment
+    required_key = os.getenv("APP_API_KEY", "").strip()
+    if required_key:
+        if not x_api_key or x_api_key != required_key:
+            raise HTTPException(status_code=401, detail="Unauthorized: Invalid or missing X-API-Key header.")
+
+    # 2. Sanitize and validate inputs
+    clean_jd = sanitize_text(job_description)
+    if not clean_jd:
+        raise HTTPException(status_code=400, detail="Job description text is required.")
 
     file_bytes = await resume_file.read()
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Resume file is empty.")
 
-    # Extract resume text
-    resume_text = extract_text_from_upload(file_bytes, resume_file.filename or "resume")
+    # Extract resume text safely
+    resume_text = extract_text_from_upload(file_bytes, resume_file.filename or "resume.pdf")
 
     if not resume_text.strip():
-        raise HTTPException(status_code=422, detail="Could not extract text from the resume file. Is it a text-based PDF?")
+        raise HTTPException(status_code=422, detail="Could not extract readable text from resume. Ensure it is a text-based PDF or DOCX.")
 
     # Run the ADK pipeline
     try:
-        state = await run_pipeline(resume_text, job_description.strip())
+        state = await run_pipeline(resume_text, clean_jd)
     except Exception as e:
         err = str(e)
         if "429" in err or "RESOURCE_EXHAUSTED" in err:
             raise HTTPException(
                 status_code=429,
-                detail="API quota exhausted. Please wait for quota reset or enable billing at https://ai.dev/rate-limit",
+                detail="API quota exhausted. Please wait for reset or update quota settings.",
             )
-        raise HTTPException(status_code=500, detail=f"Pipeline error: {err}")
+        # Avoid leaking internal exception tracebacks in production mode
+        detail_msg = err if DEBUG else "An internal server error occurred while processing the pipeline."
+        raise HTTPException(status_code=500, detail=f"Pipeline processing error: {detail_msg}")
 
     # Build and return response
     try:
         result = build_response(state)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Response build error: {e}")
+        detail_msg = str(e) if DEBUG else "An error occurred while building the report."
+        raise HTTPException(status_code=500, detail=f"Response formatting error: {detail_msg}")
 
     return JSONResponse(content={"success": True, "data": result})
 
