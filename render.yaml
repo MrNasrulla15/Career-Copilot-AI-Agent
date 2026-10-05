@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: career-copilot
+    name: career-copilot-by-nasrulla
     env: docker
     dockerfilePath: Dockerfile
     plan: free
