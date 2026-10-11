@@ -164,6 +164,38 @@ if ($("history-btn-new")) {
   $("history-btn-new").addEventListener("click", () => switchView("workspace"));
 }
 
+// Hero CTAs
+const heroBtnGetStarted = $("hero-btn-get-started");
+if (heroBtnGetStarted) {
+  heroBtnGetStarted.addEventListener("click", () => {
+    switchView("workspace");
+    const uploadInput = $("resume-file");
+    if (uploadInput) uploadInput.focus();
+  });
+}
+
+const heroBtnExplore = $("hero-btn-explore");
+if (heroBtnExplore) {
+  heroBtnExplore.addEventListener("click", () => {
+    const featuresSec = $("hero-features-section");
+    if (featuresSec) {
+      featuresSec.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+}
+
+// Feature Cards Keyboard Access (Enter / Space activation)
+qsa(".feature-card").forEach(card => {
+  card.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      const link = card.querySelector("[data-jump]");
+      if (link) link.click();
+    }
+  });
+});
+
+
 // ── Mobile Sidebar Drawer Controls ─────────────────────────────
 function openMobileSidebar() {
   if (appSidebar) appSidebar.classList.add("mobile-open");
