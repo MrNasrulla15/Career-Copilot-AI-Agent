@@ -52,7 +52,7 @@ career_copilot/
 ├── frontend/                # Web Dashboard static client files
 │   ├── app.js               # UI logic and API client
 │   ├── index.html           # Main dashboard layout
-│   └── style.css            # Custom CSS styling with premium dark mode
+│   └── style.css            # Custom CSS styling with light & dark theme support
 │
 ├── mcp_server/              # Model Context Protocol (MCP) server
 │   ├── __init__.py
@@ -210,14 +210,41 @@ gcloud run deploy career-copilot --source .
 
 ## Screenshots
 
-*Interactive Web Dashboard - Upload & Input Page:*
+### 1. Interactive Web Dashboard — Platform Overview
+*Modern SaaS interface featuring quick action triggers, intelligence metrics, and live system status:*
 ![Dashboard Home](docs/assets/dashboard_home.png)
 
-*Interactive Web Dashboard - Pipeline Processing & Loading Page:*
+### 2. Analysis Workspace — Resume Upload & Target Job Description
+*Input workspace supporting text-based PDF/DOCX file uploads, character counts, and job requirement extraction:*
+![Dashboard Workspace](docs/assets/dashboard_workspace.png)
+
+### 3. Multi-Agent Pipeline — Real-Time Execution & Loading
+*Dynamic visual progress tracker demonstrating sequential handoffs across specialized AI agents:*
 ![Dashboard Loading](docs/assets/dashboard_loading.png)
 
-*Interactive Web Dashboard - Career Intelligence Report & Match Score Page:*
+### 4. Career Intelligence Report — Match Score & Executive Overview
+*Visual circular match gauge, core sub-metrics (Skills Match, Experience Fit, ATS Readiness), and key highlights:*
 ![Dashboard Results](docs/assets/dashboard_results.png)
+
+### 5. Deep Resume Audit — Strengths & Development Areas
+*Granular breakdown of candidate competencies, growth weaknesses, and high-impact optimization recommendations:*
+![Resume Profile Audit](docs/assets/resume_audit.png)
+
+### 6. Skills & Keyword Discrepancy Matrix
+*Priority-weighted skill gap analysis highlighting missing technical competencies and ATS impact keywords:*
+![Skills Matrix](docs/assets/skills_matrix.png)
+
+### 7. Action Plan & 30/60/90-Day Career Roadmap
+*Timeline-structured study schedule with milestone objectives and portfolio capstone projects:*
+![Career Roadmap](docs/assets/career_roadmap.png)
+
+### 8. Tailored Interview Preparation Kit
+*Role-specific technical, behavioral, and system design questions paired with STAR answer frameworks:*
+![Interview Preparation](docs/assets/interview_prep.png)
+
+### 9. ADK & Agent Stack Architecture Showcase
+*Interactive agent architecture view detailing Google ADK SequentialAgent orchestration and Model Context Protocol (MCP) tool integration:*
+![Agent Architecture](docs/assets/agent_architecture.png)
 
 ---
 
