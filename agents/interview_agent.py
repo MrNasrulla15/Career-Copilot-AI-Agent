@@ -152,7 +152,7 @@ class InterviewPrepOutput(BaseModel):
 interview_agent = LlmAgent(
     name="InterviewPrepAgent",
 
-    model=os.getenv("MODEL_NAME", "gemini-2.0-flash"),
+    model=os.getenv("MODEL_NAME", "gemini-2.5-flash"),
 
     description=(
         "Generates a personalized interview preparation kit for a candidate "

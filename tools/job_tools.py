@@ -69,7 +69,7 @@ def extract_job_requirements(job_text: str) -> dict[str, Any]:
                     hard_requirements.append(bullet_text)
 
     # Extract minimum years of experience
-    exp_pattern = r"(\d+)\+?\s*(?:to\s*\d+)?\s*years?\s*(?:of\s*)?(?:professional\s*)?experience"
+    exp_pattern = r"(\d+)\+?\s*(?:to\s*\d+)?\s*years?(?:\s+of)?(?:\s+[\w\s]{0,20})?\s*experience"
     exp_matches = re.findall(exp_pattern, text_lower)
     min_experience_years = int(exp_matches[0]) if exp_matches else None
 

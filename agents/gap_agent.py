@@ -112,7 +112,7 @@ class GapAnalysisOutput(BaseModel):
 gap_agent = LlmAgent(
     name="GapAnalysisAgent",
 
-    model=os.getenv("MODEL_NAME", "gemini-2.0-flash"),
+    model=os.getenv("MODEL_NAME", "gemini-2.5-flash"),
 
     description=(
         "Compares a candidate's resume profile against a job's requirements and "

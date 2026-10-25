@@ -14,10 +14,15 @@ pip-delete-this-directory.txt
 .env
 *.env.local
 
-# Logs and scratch
+# Logs, coverage, and scratch
 *.log
 scratch/
+data/
+tests/e2e/screenshots/
 .pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 # IDE / Editor configuration
 .idea/

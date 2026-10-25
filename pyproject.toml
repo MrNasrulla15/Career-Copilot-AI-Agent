@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "career-copilot"
+version = "1.0.0"
+description = "Multi-agent career intelligence and resume-to-job matching copilot powered by Google ADK and Gemini."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Career Copilot Contributors" }
+]
+keywords = [
+    "career",
+    "copilot",
+    "multi-agent",
+    "adk",
+    "gemini",
+    "fastapi",
+    "fastmcp",
+    "llm",
+    "job-matching"
+]
+dependencies = [
+    "google-adk>=1.0.0",
+    "google-genai>=0.1.1",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "fastapi>=0.95.0",
+    "uvicorn>=0.20.0",
+    "python-multipart>=0.0.9",
+    "PyMuPDF>=1.24.0",
+    "pypdf>=4.0.0",
+    "python-docx>=0.8.11",
+    "mcp>=1.0.0",
+    "playwright>=1.40.0"
+]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --strict-markers"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "frontend"
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]

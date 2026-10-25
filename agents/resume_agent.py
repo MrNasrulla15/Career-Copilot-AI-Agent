@@ -90,7 +90,7 @@ class ResumeAnalysisOutput(BaseModel):
 resume_agent = LlmAgent(
     name="ResumeAnalysisAgent",
 
-    model=os.getenv("MODEL_NAME", "gemini-2.0-flash"),
+    model=os.getenv("MODEL_NAME", "gemini-2.5-flash"),
 
     description=(
         "Analyzes raw resume text and returns a structured JSON profile with: "

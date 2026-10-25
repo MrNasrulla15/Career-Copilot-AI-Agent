@@ -1,0 +1,43 @@
+name: CI Quality & Test Suite
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    name: Test & Validate Codebase
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Verify module imports
+        run: |
+          python -c "import agents, api.server, tools, prompts, mcp_server.server; print('Core modules verified.')"
+
+      - name: Install Playwright Chromium browser
+        run: |
+          python -m playwright install --with-deps chromium
+
+      - name: Run automated test suite
+        run: |
+          python -m unittest discover -s tests -v

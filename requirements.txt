@@ -15,23 +15,20 @@ pydantic>=2.0.0
 # python-dotenv — loads .env file into os.environ
 python-dotenv>=1.0.0
 
-# PyMuPDF — PDF text extraction
-PyMuPDF>=1.22.0
-
 # python-docx — DOCX text extraction
 python-docx>=0.8.11
 
-# FastAPI — web server framework
+# FastAPI & ASGI server
 fastapi>=0.95.0
-
-# uvicorn — ASGI server to run FastAPI app
 uvicorn>=0.20.0
+python-multipart>=0.0.9
 
-# PDF parsing — used by tools/pdf_parser.py
-# pymupdf: best-in-class layout-aware extraction (multi-column resumes)
-# pypdf:   pure-Python fallback for simpler PDFs
+# PDF parsing — used by tools/pdf_parser.py and api/server.py
 pymupdf>=1.24.0
 pypdf>=4.0.0
 
 # MCP (Model Context Protocol) — server SDK + ADK client integration
 mcp>=1.0.0
+
+# End-to-End Testing & Automation
+playwright>=1.40.0

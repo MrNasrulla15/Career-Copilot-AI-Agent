@@ -24,7 +24,6 @@ import json
 import os
 import re
 import sys
-import tempfile
 import time
 import uuid
 from collections import defaultdict
@@ -64,18 +63,17 @@ app = FastAPI(
     redoc_url="/redoc" if DEBUG else None,
 )
 
-# 1. CORS Hardening
-raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000")
+# 1. CORS Configuration
+raw_origins = os.getenv("ALLOWED_ORIGINS", "*")
 allowed_origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
-if "*" in allowed_origins and not DEBUG:
-    allowed_origins = ["http://localhost:8000", "http://127.0.0.1:8000"]
+is_wildcard = "*" in allowed_origins
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=["*"] if is_wildcard else allowed_origins,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
-    allow_credentials=True,
+    allow_credentials=not is_wildcard,
 )
 
 # 2. Security Headers & Rate Limiting Middleware
@@ -84,9 +82,14 @@ rate_limit_records = defaultdict(list)
 
 @app.middleware("http")
 async def security_and_rate_limit_middleware(request: Request, call_next):
-    # Rate limiting for API requests
-    if request.url.path.startswith("/api/"):
-        client_ip = request.client.host if request.client else "unknown"
+    # Rate limiting for API requests (excluding health checks to avoid breaking orchestrator/Render probes)
+    if request.url.path.startswith("/api/") and request.url.path != "/api/health":
+        forwarded_for = request.headers.get("x-forwarded-for")
+        if forwarded_for:
+            client_ip = forwarded_for.split(",")[0].strip()
+        else:
+            client_ip = request.client.host if request.client else "unknown"
+
         now = time.time()
         # Filter requests from last 60 seconds
         window_starts = now - 60
@@ -153,18 +156,22 @@ def extract_text_from_upload(file_bytes: bytes, filename: str) -> str:
         if not file_bytes.startswith(b"%PDF"):
             raise HTTPException(status_code=422, detail="Invalid PDF file header.")
         try:
-            import fitz
-            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-                tmp.write(file_bytes)
-                tmp_path = tmp.name
-            doc = fitz.open(tmp_path)
             pages = []
-            for i, page in enumerate(doc, 1):
-                text = page.get_text("text").strip()
-                if text:
-                    pages.append(text)
-            doc.close()
-            os.unlink(tmp_path)
+            try:
+                import fitz
+                with fitz.open(stream=file_bytes, filetype="pdf") as doc:
+                    for page in doc:
+                        text = page.get_text("text").strip()
+                        if text:
+                            pages.append(text)
+            except Exception:
+                import io
+                from pypdf import PdfReader
+                reader = PdfReader(io.BytesIO(file_bytes))
+                for page in reader.pages:
+                    text = (page.extract_text() or "").strip()
+                    if text:
+                        pages.append(text)
             return sanitize_text("\n\n".join(pages))
         except HTTPException:
             raise
@@ -498,7 +505,7 @@ async def analyze(
 @app.get("/api/health")
 async def health():
     """Health check endpoint."""
-    model = os.getenv("MODEL_NAME", "gemini-2.0-flash")
+    model = os.getenv("MODEL_NAME", "gemini-2.5-flash")
     api_key = os.getenv("GOOGLE_API_KEY", "")
     api_key_configured = bool(api_key) and api_key not in ("your_api_key_here", "your_gemini_api_key_here")
     return {"status": "ok", "model": model, "api_key_configured": api_key_configured}

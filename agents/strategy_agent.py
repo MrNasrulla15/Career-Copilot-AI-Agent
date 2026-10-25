@@ -133,7 +133,7 @@ class CareerStrategyOutput(BaseModel):
 strategy_agent = LlmAgent(
     name="CareerStrategyAgent",
 
-    model=os.getenv("MODEL_NAME", "gemini-2.0-flash"),
+    model=os.getenv("MODEL_NAME", "gemini-2.5-flash"),
 
     description=(
         "Transforms a gap analysis report into a concrete, personalized 30/60/90-day "

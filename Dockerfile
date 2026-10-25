@@ -20,6 +20,10 @@ COPY . ./
 # Install pip dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Run as non-root user for security best practices
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser $APP_HOME
+USER appuser
+
 # Run the web service on container startup.
 # Cloud Run sets the PORT environment variable automatically (defaults to 8080)
 CMD exec uvicorn api.server:app --host 0.0.0.0 --port ${PORT:-8080}

@@ -12,7 +12,7 @@ Usage:
 
 Environment variables (see .env.example):
     GOOGLE_API_KEY           -- your Google AI Studio API key
-    MODEL_NAME               -- model override (default: gemini-2.0-flash)
+    MODEL_NAME               -- model override (default: gemini-2.5-flash)
     GOOGLE_GENAI_USE_VERTEXAI -- set "true" to use Vertex AI
 """
 
@@ -136,7 +136,7 @@ async def run_session(runner: Runner, session_id: str) -> None:
 
     while True:
         turn += 1
-        model = os.getenv("MODEL_NAME", "gemini-2.0-flash")
+        model = os.getenv("MODEL_NAME", "gemini-2.5-flash")
         print(f"[Turn {turn}] ({model}) -- Paste input, then type DONE on a new line:")
 
         lines = []
@@ -170,7 +170,6 @@ async def run_session(runner: Runner, session_id: str) -> None:
             print("[PDF] Extracting text...")
             try:
                 user_input = extract_text_from_pdf(pdf_path)
-                import os as _os
                 page_count = user_input.count("[Page ")
                 print(f"[PDF] Extracted {page_count} page(s) successfully. Sending to pipeline.\n")
             except Exception as e:

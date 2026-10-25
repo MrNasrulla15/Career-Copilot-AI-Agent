@@ -69,7 +69,7 @@ _MCP_SERVER_SCRIPT = str(
 _document_processor_agent = LlmAgent(
     name="DocumentProcessorAgent",
 
-    model=os.getenv("MODEL_NAME", "gemini-2.0-flash"),
+    model=os.getenv("MODEL_NAME", "gemini-2.5-flash"),
 
     description=(
         "Handles document input preprocessing. If the user provides a PDF file "
@@ -111,7 +111,7 @@ _document_processor_agent = LlmAgent(
 _synthesis_agent = LlmAgent(
     name="CareerCopilotSynthesizer",
 
-    model=os.getenv("MODEL_NAME", "gemini-2.0-flash"),
+    model=os.getenv("MODEL_NAME", "gemini-2.5-flash"),
 
     description=(
         "Reads all specialist agent outputs from session state and synthesizes "
