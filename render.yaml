@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: career-copilot-by-nasrulla
+    name: career-copilot-ai-agent
     env: docker
     dockerfilePath: Dockerfile
     plan: free
