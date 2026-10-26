@@ -40,7 +40,7 @@ Tailoring resumes to modern software engineering roles requires deep technical a
 
 ## Key Features & Measurable Engineering Achievements
 
-### Google XYZ Formula Impact Summary
+### Performance Benchmarks & Impact
 
 * **Pipeline Latency & Throughput**:
   * **Accomplished:** Reduced end-to-end multi-agent execution latency by **~40–45%**.
